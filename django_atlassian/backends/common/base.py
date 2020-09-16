@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+
 
 from collections import namedtuple
 import requests
@@ -8,14 +8,12 @@ import logging
 import json
 
 from django.utils.dateparse import parse_datetime
-from django.contrib.auth import get_user_model
 
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.backends.base.client import BaseDatabaseClient
 from django.db.backends.base.creation import BaseDatabaseCreation
 from django.db.backends.base.features import BaseDatabaseFeatures
 from django.db.backends.base.operations import BaseDatabaseOperations
-from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 from django.db.backends.base.validation import BaseDatabaseValidation
 from django.db.backends.base.introspection import BaseDatabaseIntrospection, FieldInfo
 
@@ -150,7 +148,7 @@ class AtlassianDatabaseFeatures(BaseDatabaseFeatures):
     supports_select_union = False
     supports_select_intersection = False
     supports_select_difference = False
-    
+
     def __init__(self, connection):
         self.connection = connection
 
@@ -190,7 +188,7 @@ class AtlassianDatabaseConvertion(object):
             elif field[1] in ['user', 'issuetype'] and data is not None:
                 return data['name']
             else:
-                if field[12] and data.has_key('value'):
+                if field[12] and 'value' in data:
                     return data['value']
                 return data
         except Exception as err:
@@ -226,7 +224,7 @@ class AtlassianDatabaseCursor(object):
         normal = re.sub(r'\W', '_', name).lower()
         normal = re.sub(r'_{2,}', '_', normal)
         if normal[0] == '_':
-            normal = normal[1:] 
+            normal = normal[1:]
         return normal
 
     def close(self):
@@ -250,18 +248,18 @@ class AtlassianDatabaseCursor(object):
                 else:
                     new_params.extend([i])
 
-        if not opts.has_key ('start_at'):
+        if 'start_at' not in opts:
             opts['start_at'] = 0
-        if not opts.has_key ('max_results'):
+        if 'max_results' not in opts:
             opts['max_results'] = -1
-        if not opts.has_key ('count_only'):
+        if 'count_only' not in opts:
             opts['count_only'] = False
         self.opts = opts
         self.sql = self.get_sql_qs(sql)
         self.sql = self.sql % tuple(self.escape_type(p) for p in new_params)
 
         # Only include the requested fields
-        if opts.has_key('fields'):
+        if 'fields' in opts:
             # The fields have the name of the 'clause' used, but we need to use
             # the 'id' to tell the API what fields to expand
             fields_s = opts['fields']
@@ -271,7 +269,7 @@ class AtlassianDatabaseCursor(object):
             # replace the fields with the corresponding 'id'
             self.fields = self.get_fields(fields)
         # Check if we need to update
-        if opts.has_key('update_fields'):
+        if 'update_fields' in opts:
             rows = self.fetchmany()
             self.update(rows, opts['update_fields'])
 
@@ -312,26 +310,26 @@ class AtlassianDatabaseCursor(object):
         if fields:
             for f in fields:
                 for c in content:
-                    if c.has_key('schema'):
-                        if c.has_key('clauseNames') and c['clauseNames'] and c['clauseNames'][0] == f:
+                    if 'schema' in c:
+                        if 'clauseNames' in c and c['clauseNames'] and c['clauseNames'][0] == f:
                             ret.append(c)
         else:
             ret = content
         return ret
- 
+
     def get_fields(self, fields=None):
-        """ 
+        """
         Method to return the FieldInfo and the field API id's
         If use_id = False, then the returned field names are the ones
         used for the query clause. If it is True, the field names
         used on the expand/select are used. The fields parameter is
         used to filter the result
-        """ 
+        """
         ret = []
         if not self.raw_fields:
             self.raw_fields = self.get_raw_fields(fields)
         for f in self.raw_fields:
-            if f.has_key('schema') and f.has_key('clauseNames') and f['clauseNames']:
+            if 'schema' in f and 'clauseNames' in f and f['clauseNames']:
                 schema = f['schema']['type']
                 array_type = None
                 if schema == 'any' and f['schema']['custom']:
@@ -342,12 +340,12 @@ class AtlassianDatabaseCursor(object):
                 if hasattr(self.db.introspection, 'columns_read_only'):
                     editable = f['name'] not in self.db.introspection.columns_read_only
                 choices = f.get('choices', None)
- 
+
                 ret.append(FieldInfo(f['clauseNames'][0], schema, None, None, None, None, True, None, self.__normalize_field_name(f['name']), f['id'], array_type, editable, choices))
         return ret
 
     def escape_type(self, value):
-        if type(value) == unicode or type(value) == str:
+        if type(value) == str or type(value) == str:
             return '"%s"' % value
         else:
             return value
@@ -410,7 +408,7 @@ class AtlassianDatabaseWrapper(BaseDatabaseWrapper):
         """Compute appropriate parameters for establishing a new connection."""
         if not self.connection_class:
             raise NotImplementedError('missing connection class attribute')
-        
+
         return self.connection_class(self.settings_dict['NAME'],
                 self.settings_dict['USER'], self.settings_dict['PASSWORD'],
                 self.settings_dict['SECURITY'])
@@ -431,4 +429,3 @@ class AtlassianDatabaseWrapper(BaseDatabaseWrapper):
 
     def _set_autocommit(self, autocommit):
         pass
-

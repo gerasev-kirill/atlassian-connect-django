@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+
 
 from importlib import import_module
 import json
@@ -13,7 +13,7 @@ from django.apps import apps
 from django.views.generic.base import TemplateView
 from django.core.exceptions import ImproperlyConfigured
 
-from models.connect import SecurityContext
+from .models.connect import SecurityContext
 
 @csrf_exempt
 def installed(request):
@@ -79,8 +79,8 @@ class ApplicationDescriptor(TemplateView):
             try:
                 module = import_module('{}.{}_modules'.format(app.module.__name__, self.get_application_name()))
                 for m in module.modules:
-                    for k,v in m.items():
-                        if not k in modules.keys():
+                    for k,v in list(m.items()):
+                        if not k in list(modules.keys()):
                             modules[k] = []
                         modules[k] = modules[k] + v
             except ImportError:

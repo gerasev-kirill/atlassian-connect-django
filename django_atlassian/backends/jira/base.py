@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+
 
 import json
 import logging
 import requests
 
-from django.utils.dateparse import parse_datetime
-from django.db.backends.base.introspection import BaseDatabaseIntrospection, TableInfo, FieldInfo
-
+from django.db.backends.base.introspection import BaseDatabaseIntrospection, TableInfo
 from django_atlassian.backends.common.base import AtlassianDatabaseWrapper, AtlassianDatabaseCursor, AtlassianDatabaseOperations, AtlassianDatabaseConvertion
+
+
 
 logger = logging.getLogger('django_atlassian.backends.jira')
 
@@ -99,7 +99,7 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
         relations = {}
         content = cursor.get_raw_fields()
         for f in content:
-            if f.has_key('schema'):
+            if 'schema' in f:
                 if f['schema']['type'] == 'any' and \
                         f['schema']['custom'] in self.data_type_relations:
                     relations[f['clauseNames'][0]] = ('issues', 'issue')
@@ -150,7 +150,7 @@ class DatabaseCursor(AtlassianDatabaseCursor):
         for f in self.fields:
             if not f[11]:
                 continue
-            for rf_key, rf_value in fields.iteritems():
+            for rf_key, rf_value in fields.items():
                 if f[0] == rf_key:
                     body['fields'].update({f[9]: self.db.convertion.to_native(rf_value, f)})
         # update every result
@@ -268,9 +268,9 @@ class DatabaseCursor(AtlassianDatabaseCursor):
 
 class DatabaseConvertion(AtlassianDatabaseConvertion):
     def extract(self, data, field, raw_field):
-        if data.has_key(field[9]):
+        if field[9] in data:
             return data[field[9]]
-        elif data['fields'].has_key(field[9]):
+        elif field[9] in data['fields']:
             return data['fields'][field[9]]
         else:
             logger.error("Field with id %s and name %s not found", field[8], field[9])
@@ -293,7 +293,7 @@ class DatabaseConvertion(AtlassianDatabaseConvertion):
                 return None
         # Handle the parent link
         elif field[1] == 'com.atlassian.jpo:jpo-custom-field-parent':
-            if data.has_key('data'):
+            if 'data' in data:
                 return data['data']['key']
             else:
                 return None

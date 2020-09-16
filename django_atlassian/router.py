@@ -10,7 +10,7 @@ class Router(object):
     def __init__(self):
         self.db_jira_alias = None
         self.db_confluence_alias = None
-        for alias, settings_dict in settings.DATABASES.items():
+        for alias, settings_dict in list(settings.DATABASES.items()):
             if settings_dict['ENGINE'] == 'django_atlassian.backends.jira':
                 self.db_jira_alias = alias
             if settings_dict['ENGINE'] == 'django_atlassian.backends.confluence':
@@ -32,7 +32,7 @@ class Router(object):
             atlassian_db = getattr(atlassian_meta, 'db', False)
             if not atlassian_db:
                 return self.db_jira_alias
-            for alias, settings_dict in connections.databases.items():
+            for alias, settings_dict in list(connections.databases.items()):
                 if settings_dict['ENGINE'] == 'django_atlassian.backends.jira' and \
                     alias == atlassian_db:
                     return alias
@@ -51,7 +51,7 @@ class Router(object):
             atlassian_db = getattr(atlassian_meta, 'db', False)
             if not atlassian_db:
                 return self.db_jira_alias
-            for alias, settings_dict in connections.databases.items():
+            for alias, settings_dict in list(connections.databases.items()):
                 if settings_dict['ENGINE'] == 'django_atlassian.backends.jira' and \
                     alias == atlassian_db:
                     return alias

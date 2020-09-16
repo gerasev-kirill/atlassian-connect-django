@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 
-from django.contrib.auth import get_user_model
+
 from django.db.models.sql import compiler
 from django.db.models.expressions import Col
 from django.db.models.aggregates import Count
-from django.db.models.fields.related_lookups import RelatedExact
+
 
 class SQLCompiler(compiler.SQLCompiler):
 

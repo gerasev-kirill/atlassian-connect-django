@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
+
 
 import logging
 import importlib
@@ -12,14 +12,10 @@ import os
 import copy
 
 from django.db import models, router, connections
-from django.conf import settings
-from django.contrib.auth.models import User
 from django.db.models.signals import class_prepared
 from django.db.models.manager import Manager, EmptyManager
 
-from django_atlassian.models.connect import SecurityContext
 from django_atlassian.backends.jira.base import DatabaseConvertion
-from django_atlassian.models.fields import ArrayField
 
 from jira import JIRA
 from jira.resources import Issue as JiraIssue
@@ -111,9 +107,9 @@ class IssueLinkList(collections.MutableSequence):
         count = 0
         for x in content['fields']['issuelinks']:
             if x['type']['id'] == self.link_type['id']:
-                if self.inward and x.has_key('inwardIssue'):
+                if self.inward and 'inwardIssue' in x:
                     count = count + 1
-                elif not self.inward and x.has_key('outwardIssue'):
+                elif not self.inward and 'outwardIssue' in x:
                     count = count + 1
         return count
 
@@ -165,13 +161,13 @@ class IssueLinkList(collections.MutableSequence):
         link_id = 0
         for x in content['fields']['issuelinks']:
             if x['type']['id'] == self.link_type['id']:
-                if self.inward and x.has_key('inwardIssue'):
+                if self.inward and 'inwardIssue' in x:
                     if count == index:
                         link = x['inwardIssue']
                         link_id = x['id']
                         break
                     count = count + 1
-                elif not self.inward and x.has_key('outwardIssue'):
+                elif not self.inward and 'outwardIssue' in x:
                     if count == index:
                         link = x['outwardIssue']
                         link_id = x['id']
@@ -211,7 +207,7 @@ class IssueLinks(object):
         response = self.db.connection.get_request(self.uri_get_all)
         if response.status_code != requests.codes.ok:
             raise AttributeError("'IssueLinks' has no attribute %s" % name)
-        
+
         content = json.loads(response.content)
         link_type = None
         inward = False
@@ -237,7 +233,7 @@ class Attachment(object):
     """
     def __init__(self, obj, db):
         self.db = db
-        for key, value in obj.iteritems():
+        for key, value in obj.items():
             if isinstance(value, dict):
                self.__init__(value, db)
             else:
@@ -269,7 +265,7 @@ class JiraIssueModel(JiraIssue):
                 'payload': {'iss': sc.key},
             }
         else:
-            # static models 
+            # static models
             db = self.get_db().connection
             options['server'] = db.uri
             session.auth = (db.user, db.password)
@@ -333,7 +329,7 @@ class Issue(models.base.Model, JiraIssueModel):
             return False
 
     def has_parent(self):
-        """ 
+        """
         Return True if the issue has a parent, False otherwise
         """
         if self.epic_link_id is not None:
@@ -342,10 +338,10 @@ class Issue(models.base.Model, JiraIssueModel):
             return True
         if self.parent_id is not None:
             return True
-        return False 
+        return False
 
     def get_parent(self):
-        """ 
+        """
         Get the parent issue depending on the issue type
         """
         if self.epic_link_id is not None:
@@ -386,7 +382,7 @@ class Issue(models.base.Model, JiraIssueModel):
         response.raise_for_status()
         content = json.loads(response.content)
         return content
-    
+
     def get_attachment(self):
         """
         Get an url list of attached files
@@ -403,7 +399,7 @@ class Issue(models.base.Model, JiraIssueModel):
         """
         uri = "/rest/api/3/issue/{}/attachments".format(self.key)
         if isinstance(attachment, str):
-            attachment = open(attachment, "rb") 
+            attachment = open(attachment, "rb")
 
         if not filename:
             filename = os.path.basename(attachment.name)
@@ -426,7 +422,7 @@ class Issue(models.base.Model, JiraIssueModel):
             response = self.get_db().connection.delete_request(uri)
             return response.status_code
         except Exception as e:
-            raise e 
+            raise e
 
     def __unicode__(self):
         return str(self.key)
@@ -465,7 +461,7 @@ def create_model(name):
 
     # Set up a dictionary to simulate declarations within a class
     attrs = {
-        '__module__': create_model.__module__, 
+        '__module__': create_model.__module__,
         'Meta': Meta,
         'AtlassianMeta': am
     }
@@ -483,7 +479,7 @@ def populate_model(db, model):
     # Check if the description is already populated
     if am.description:
         return
-        
+
     logger.info("Populating model %s", model)
     # Create a cursor to inspect the database for the fields
     with db.cursor() as cursor:
@@ -497,7 +493,7 @@ def populate_model(db, model):
             constraints = {}
         primary_key_column = db.introspection.get_primary_key_column(cursor, 'issue')
         unique_columns = [
-            c['columns'][0] for c in constraints.values()
+            c['columns'][0] for c in list(constraints.values())
             if c['unique'] and len(c['columns']) == 1
         ]
         table_description = db.introspection.get_table_description(cursor, 'issue')
@@ -537,7 +533,7 @@ def populate_model(db, model):
             if field_type:
                 field_module = 'django.db.models' if '.' not in field_type else '.'.join(field_type.split('.')[:-1])
                 field_class = field_type if '.' not in field_type else field_type.split('.')[-1]
-                logger.info("Adding field '%s' for column '%s' for class '%s'", field_name, column_name, field_class) 
+                logger.info("Adding field '%s' for column '%s' for class '%s'", field_name, column_name, field_class)
                 try:
                     field_module = importlib.import_module(field_module)
                     try:
@@ -575,5 +571,5 @@ def add_fields(sender, **kwargs):
     logger.info("Class %s prepared, populating", sender)
     populate_model(connection, sender)
 
- 
+
 class_prepared.connect(add_fields)

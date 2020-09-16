@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+
 
 from django_atlassian.backends.common import compiler as common_compiler
 from django.db.models.sql import compiler

@@ -1,15 +1,6 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 
-import jwt
-import time
-import json
-import urlparse
-import urllib
-import hashlib
-import base64
 import atlassian_jwt
-
 from django.db import models
 
 class SecurityContext(models.base.Model):
