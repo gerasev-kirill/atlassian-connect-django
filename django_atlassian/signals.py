@@ -18,6 +18,10 @@ host_settings_not_saved = django.dispatch.Signal()
      after an ngrok tunnel is created, ACE will try to register or install the app in a Jira or Confluence product
 '''
 addon_registered = django.dispatch.Signal()
+'''
+    ACE automatically registers webhooks and corresponding paths in the descriptor file, once it tries to authenticate and is successful, this event is emitted
+'''
+webhook_auth_verification_successful = django.dispatch.Signal()
 
 
 

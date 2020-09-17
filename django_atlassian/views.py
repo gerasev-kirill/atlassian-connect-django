@@ -14,8 +14,9 @@ from django.views.generic.base import TemplateView
 from django.views import View
 from django.core.exceptions import ImproperlyConfigured
 
-from .models.connect import SecurityContext
+from .models.connect import SecurityContext, WebhookPayload
 from .addon import JiraAddon, ConfluenceAddon, BaseAddon
+from .decorators import jwt_required
 
 from . import signals
 
@@ -107,6 +108,29 @@ class LifecycleUninstalledView(LifecycleView):
 
 
 
+@method_decorator(jwt_required, name='dispatch')
+@method_decorator(csrf_exempt, name='dispatch')
+class WebhookView(View):
+    def get_payload_from_request(self, request):
+        try:
+            body_unicode = request.body
+            if not six.PY2:
+                body_unicode = body_unicode.decode('utf-8')
+            return json.loads(body_unicode)
+        except:
+            return None
+
+
+    def post(self, request, *args, **kwargs):
+        payload = self.get_payload_from_request(request)
+        if not payload:
+            return HttpResponseBadRequest()
+        signals.webhook_auth_verification_successful.send(
+            sender=BaseAddon,
+            payload_obj=WebhookPayload(**payload), 
+            webhook_name=kwargs['webhook_name']
+        )
+        return HttpResponse(status=204)
 
 
 
@@ -153,6 +177,8 @@ class ApplicationDescriptor(TemplateView):
                 continue
             connect_data = module.get_connect_data(request=self.request, addon=addon)
             context.update(connect_data)
+
+        context = addon.normalize_addon_connect_config(context)
         context['modules'] = json.dumps(context.get('modules', None) or {})
         if 'pluginScopes' in context and not isinstance(context['pluginScopes'], str):
             context['pluginScopes'] = json.dumps(context['pluginScopes'])

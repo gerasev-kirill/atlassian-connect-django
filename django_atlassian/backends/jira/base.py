@@ -309,16 +309,18 @@ class DatabaseConvertion(AtlassianDatabaseConvertion):
                 issuelinks = []
                 try:
                     outwardIssues = [item['outwardIssue']['key'] for item in data]
-                    print(outwardIssues)
+                    #print(outwardIssues)
                     return outwardIssues
                 except:
-                    print(data)
+                    pass
+                    #print(data)
                 try:
                     inwardIssues = [item['inwardIssue']['key'] for item in data]
-                    print(inwardIssues)
+                    #print(inwardIssues)
                     return inwardIssues
                 except:
-                    print(data)
+                    pass
+                    #print(data)
             # Handle Jira Software special array
             elif field[10] == 'com.pyxis.greenhopper.jira:gh-sprint':
                 # TODO parse the string properly in the form:

@@ -82,6 +82,21 @@ class BaseAddon(object):
                 hosts[host] = auth_data
         return hosts
 
+    def normalize_addon_connect_config(self, config):
+        if 'modules' in config and 'webhooks' in config['modules']:
+            webhooks = []
+            for wh in config['modules']['webhooks']:
+                if not wh.get('url', None):
+                    wh['url'] = reverse('django-atlassian-webhook', kwargs={
+                        'webhook_name': wh.get('webhookName', None) or wh['event']
+                    })
+                    if 'webhookName' in wh:
+                        del wh['webhookName']
+                webhooks.append(wh)
+            config['modules']['webhooks'] = webhooks
+            return config
+        return config
+
 
     def register(self, port=None):
         ac_opts = os.environ.get('AC_OPTS', None) or ''

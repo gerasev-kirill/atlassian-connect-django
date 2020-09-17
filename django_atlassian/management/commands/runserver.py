@@ -9,7 +9,7 @@ class Command(BaseCommand):
         handler = super(Command, self).get_handler(*args, **options)
 
         def register_addon():
-            time.sleep(0.4)
+            time.sleep(0.1)
             jira_addon = JiraAddon()
             confluence_addon = ConfluenceAddon()
             jira_addon.register(port=self.port)

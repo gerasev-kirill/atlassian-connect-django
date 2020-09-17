@@ -40,7 +40,7 @@ class JWTAuthenticationMiddleware(MiddlewareMixin):
             uri = "%s?%s" % (uri, query)
         try:
             client_key = auth.authenticate(request.method, uri, headers)
-        except Exception as e:
+        except Exception:
             return None
 
         sc = SecurityContext.objects.filter(client_key=client_key).get()

@@ -58,7 +58,7 @@ class JiraManagerMixin(JIRA):
                             db_settings['PASSWORD']
                         )
                 )
-            elif db_settings['SECURITY']:
+            elif db_settings.get('SECURITY', None):
                 jwt = {
                     'secret': db_settings['SECURITY'].shared_secret,
                     'payload': {'iss': db_settings['SECURITY'].key},
@@ -68,10 +68,12 @@ class JiraManagerMixin(JIRA):
                     jwt=jwt
                 )
         except Exception as err:
+            logger.error("Failed to create JiraManagerMixin instance")
             logger.error(err)
 
 
 class JiraManager(EmptyManager, JiraManagerMixin):
+    model = None
 
     def __init__(self, *args, **kwargs):
         super(JiraManager, self).__init__(None)
