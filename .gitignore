@@ -5,3 +5,5 @@
 django_atlassian.egg-info/
 dist
 Pipfile
+.ropeproject
+__pycache__
