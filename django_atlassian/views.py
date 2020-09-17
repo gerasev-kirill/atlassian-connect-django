@@ -2,58 +2,114 @@
 
 
 from importlib import import_module
-import json
-import jwt
+import json, six
 
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.datastructures import MultiValueDictKeyError
+from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.apps import apps
 from django.views.generic.base import TemplateView
+from django.views import View
 from django.core.exceptions import ImproperlyConfigured
 
 from .models.connect import SecurityContext
+from .addon import JiraAddon, ConfluenceAddon, BaseAddon
 
-@csrf_exempt
-def installed(request):
-    """
-    Main view to handle the signal of the cloud instance when the addon
-    has been installed
-    """
-    try:
-        post = json.loads(request.body)
-        key = post['key']
-        shared_secret = post['sharedSecret']
-        client_key = post['clientKey']
-        host = post['baseUrl']
-    except MultiValueDictKeyError:
-        return HttpResponseBadRequest()
+from . import signals
 
-    # Store the security context
-    # https://developer.atlassian.com/cloud/jira/platform/authentication-for-apps/
-    sc = SecurityContext.objects.filter(key=key, host=host).first()
-    if sc:
-        update = False
-        # Confirm that the shared key is the same, otherwise update it
-        if sc.shared_secret != shared_secret:
-            sc.shared_secret = shared_secret
-            update = True
-        if sc.client_key != client_key:
-            sc.client_key = client_key
-            update = True
-        if update:
-            sc.save()
-    else:
-        # Create a new entry on our database of connections
-        sc = SecurityContext()
-        sc.key = key
-        sc.host = host
-        sc.shared_secret = shared_secret
-        sc.client_key = client_key
-        sc.save()
 
-    return HttpResponse(status=204)
+@method_decorator(csrf_exempt, name='dispatch')
+class LifecycleView(View):
+    def get_payload_from_request(self, request):
+        try:
+            body_unicode = request.body
+            if not six.PY2:
+                body_unicode = body_unicode.decode('utf-8')
+            post = json.loads(body_unicode)
+            return {
+                'key': post['key'],
+                'sharedSecret': post.get('sharedSecret', None),
+                'clientKey': post['clientKey'],
+                'host': post['baseUrl'],
+                'product': post['productType']
+            }
+        except MultiValueDictKeyError:
+            return None
+
+    def get_addon_class_from_payload(self, payload=None):
+        if not payload or not payload.get('product', None):
+            return BaseAddon
+        if payload['product'] == 'jira':
+            return JiraAddon
+        if payload['product'] == 'confluence':
+            return ConfluenceAddon
+        return BaseAddon
+
+
+
+class LifecycleInstalledView(LifecycleView):
+    def post(self, request, *args, **kwargs):
+        payload = self.get_payload_from_request(request)
+        addon_class = self.get_addon_class_from_payload(payload)
+
+        if not payload:
+            signals.host_settings_not_saved.send(sender=addon_class, payload=None)
+            return HttpResponseBadRequest()
+        # Store the security context
+        # https://developer.atlassian.com/cloud/jira/platform/authentication-for-apps/
+        sc = SecurityContext.objects.filter(key=payload['key'], host=payload['host']).first()
+        if sc:
+            update = False
+            # Confirm that the shared key is the same, otherwise update it
+            if sc.shared_secret != payload['sharedSecret']:
+                sc.shared_secret = payload['sharedSecret']
+                update = True
+            if sc.client_key != payload['clientKey']:
+                sc.client_key = payload['clientKey']
+                update = True
+            if update:
+                try:
+                    sc.save()
+                    signals.host_settings_saved.send(sender=addon_class, payload=payload, security_context=sc)
+                except Exception as e:
+                    signals.host_settings_not_saved.send(sender=addon_class, payload=payload, security_context=sc, exception=e)
+        else:
+            # Create a new entry on our database of connections
+            sc = SecurityContext(
+                key=payload['key'],
+                host=payload['host'],
+                shared_secret=payload['sharedSecret'],
+                client_key=payload['clientKey']
+            )
+            try:
+                sc.save()
+                signals.host_settings_saved.send(sender=addon_class, payload=payload, security_context=sc)
+            except Exception as e:
+                signals.host_settings_not_saved.send(sender=addon_class, payload=payload, security_context=sc, exception=e)
+
+        return HttpResponse(status=204)
+
+
+
+
+class LifecycleUninstalledView(LifecycleView):
+    def post(self, request, *args, **kwargs):
+        payload = self.get_payload_from_request(request)
+        addon_class = self.get_addon_class_from_payload(payload)
+
+        if not payload:
+            signals.host_settings_not_saved.send(sender=addon_class, payload=None)
+            return HttpResponseBadRequest()
+        return HttpResponse(status=204)
+
+
+
+
+
+
+
 
 
 class ApplicationDescriptor(TemplateView):
@@ -70,29 +126,36 @@ class ApplicationDescriptor(TemplateView):
         return ['django_atlassian/{}/atlassian-connect.json'.format(self.get_application_name())]
 
     def get_context_data(self, *args, **kwargs):
+        if self.application_name == 'jira':
+            addon = JiraAddon()
+        elif self.application_name == 'confluence':
+            addon = ConfluenceAddon()
+        else:
+            raise NameError("Unknown application name '%s'" % self.application_name)
+
         context = super(ApplicationDescriptor, self).get_context_data(*args, **kwargs)
-        base_url = self.request.build_absolute_uri('/')
-        context['base_url'] = getattr(settings, 'URL_BASE', base_url)
-        # Get all the contents of the registered apps application_name_modules.py files
-        modules = {}
+        context['localBaseUrl'] = addon.get_local_base_url(self.request)
+        # Get the needed settings or abort
+        prop = 'DJANGO_ATLASSIAN_CONNECT_ADDON_{}'.format(self.get_application_name().upper())
+        config = {}
+        if hasattr(settings, prop):
+            config = (getattr(settings, prop) or {}).copy()
+        config['vendorName'] = config.get('vendorName', None) or 'Test, Inc.'
+        config['vendorUrl'] = config.get('vendorUrl', None) or context['localBaseUrl']
+        context.update(config)
+        # Get all the contents of the registered apps {jira|confluence}_atlassian_connect.py files
         for app in apps.get_app_configs():
             try:
-                module = import_module('{}.{}_modules'.format(app.module.__name__, self.get_application_name()))
-                for m in module.modules:
-                    for k,v in list(m.items()):
-                        if not k in list(modules.keys()):
-                            modules[k] = []
-                        modules[k] = modules[k] + v
+                module = import_module('{}.{}_atlassian_connect'.format(app.module.__name__, self.get_application_name()))
             except ImportError:
                 continue
-        context['modules'] = json.dumps(modules)
-        # Get the needed settings or abort
-        context['name'] = getattr(settings, 'DJANGO_ATLASSIAN_{}_NAME'.format(self.get_application_name().upper()))
-        context['description'] = getattr(settings, 'DJANGO_ATLASSIAN_{}_DESCRIPTION'.format(self.get_application_name().upper()))
-        context['key'] = getattr(settings, 'DJANGO_ATLASSIAN_{}_KEY'.format(self.get_application_name().upper()))
-        context['vendor_name'] = getattr(settings, 'DJANGO_ATLASSIAN_VENDOR_NAME')
-        context['vendor_url'] = getattr(settings, 'DJANGO_ATLASSIAN_VENDOR_URL')
-
+            if not hasattr(module, 'get_connect_data') or not callable(module.get_connect_data):
+                continue
+            connect_data = module.get_connect_data(request=self.request, addon=addon)
+            context.update(connect_data)
+        context['modules'] = json.dumps(context.get('modules', None) or {})
+        if 'pluginScopes' in context and not isinstance(context['pluginScopes'], str):
+            context['pluginScopes'] = json.dumps(context['pluginScopes'])
         return context
 
 

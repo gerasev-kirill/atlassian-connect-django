@@ -7,11 +7,11 @@ import threading
 
 from django.utils.deprecation import MiddlewareMixin
 from django.apps import apps
-from django.db import models, connections
-from django.db.utils import ConnectionDoesNotExist 
+from django.db import connections
+from django.db.utils import ConnectionDoesNotExist
 
 from django_atlassian.models.connect import SecurityContext
-from django_atlassian.models.djira import create_model, populate_model
+from django_atlassian.models.djira import create_model
 
 logger = logging.getLogger('django_atlassian')
 lock = threading.Lock()
@@ -51,7 +51,7 @@ class JWTAuthenticationMiddleware(MiddlewareMixin):
             connections.databases[client_key] = self._create_database(client_key, sc)
             db = connections[client_key]
 
-        with lock: 
+        with lock:
             try:
                 model = apps.get_model('django_atlassian', client_key)
             except LookupError:
@@ -59,7 +59,7 @@ class JWTAuthenticationMiddleware(MiddlewareMixin):
                 model = create_model(str(client_key))
 
         request.atlassian_model = model
-        request.atlassian_sc = sc
+        request.atlassian_security_context = sc
         request.atlassian_db = db
         return None
 

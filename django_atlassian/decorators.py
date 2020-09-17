@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied
 
 def jwt_required(function):
     def decorator(request, *args, **kwargs):
-        sc = getattr(request, 'atlassian_sc', None)
+        sc = getattr(request, 'atlassian_security_context', None)
         model = getattr(request, 'atlassian_model', None)
         if not sc or not model:
             raise PermissionDenied

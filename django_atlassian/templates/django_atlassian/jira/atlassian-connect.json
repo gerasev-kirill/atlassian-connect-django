@@ -1,21 +1,25 @@
 {
-    "name": "{{ name }}",
-    "description": "{{ description }}",
-    "key": "{{ key }}",
-    "baseUrl": "{{ base_url }}",
-    "vendor": {
-        "name": "{{ vendor_name }}",
-        "url": "{{ vendor_url }}",
+    "name": "{{ pluginName }}",
+    "description": "{{ pluginDescription }}",
+    "key": "{{ pluginKey }}",
+    "baseUrl": "{{ localBaseUrl }}",
+    "links": {
+        "self": "{{ localBaseUrl }}{% url 'django-atlassian-jira-connect-json' %}"
     },
+    "vendor": {
+        "name": "{{ vendorName }}",
+        "url": "{{ vendorUrl }}"
+    },
+    {% if pluginEnableLicensing %}"enableLicensing": true,{% endif %}
     "authentication": {
         "type": "jwt"
     },
     "lifecycle": {
-        "installed": "{% url 'django-atlassian-installed' %}"
+        "installed": "{% url 'django-atlassian-installed' %}",
+        "uninstalled": "{% url 'django-atlassian-uninstalled' %}"
     },
-    "scopes": [
-        "read", "write"
-    ],
+    "scopes": {% if pluginScopes %}{{ pluginScopes|safe }}{% else %}["READ"]{% endif %},
     "apiVersion": 1,
+    "version": {% if pluginVersion %}"{{pluginVersion}}"{% else %}"1.0.0"{% endif%},
     "modules": {{ modules|safe }}
 }
