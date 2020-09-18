@@ -1,0 +1,27 @@
+{
+    "name": "{{ pluginName }}",
+    "description": "{{ pluginDescription }}",
+    "key": "{{ pluginKey }}",
+    "baseUrl": "{{ localBaseUrl }}",
+    "links": {
+        "self": "{{ localBaseUrl }}{% url 'atlassian-connect-django-jira-connect-json' %}"
+    },
+    "vendor": {
+        "name": "{{ vendorName }}",
+        "url": "{{ vendorUrl }}"
+    },
+    {% if pluginEnableLicensing %}"enableLicensing": true,{% endif %}
+    "authentication": {
+        "type": "jwt"
+    },
+    "lifecycle": {
+        "installed": "{% url 'atlassian-connect-django-installed' %}",
+        "enabled": "{% url 'atlassian-connect-django-enabled' %}",
+        "disabled": "{% url 'atlassian-connect-django-disabled' %}",
+        "uninstalled": "{% url 'atlassian-connect-django-uninstalled' %}"
+    },
+    "scopes": {% if pluginScopes %}{{ pluginScopes|safe }}{% else %}["READ"]{% endif %},
+    "apiVersion": 1,
+    "version": {% if pluginVersion %}"{{pluginVersion}}"{% else %}"1.0.0"{% endif%},
+    "modules": {{ pluginModules|safe }}
+}

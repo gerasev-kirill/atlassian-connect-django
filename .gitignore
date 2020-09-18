@@ -2,7 +2,7 @@
 *.pyo
 .vscode
 *.egg-info
-django_atlassian.egg-info/
+atlassian_connect_django.egg-info/
 dist
 Pipfile
 .ropeproject

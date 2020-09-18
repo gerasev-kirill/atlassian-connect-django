@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>2. Example Configuration &#8212; django-atlassian 0.1.1 documentation</title>
+    <title>2. Example Configuration &#8212; atlassian-connect-django 0.1.1 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="installation.html" title="1. Installation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">django-atlassian 0.1.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">atlassian-connect-django 0.1.1 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -48,14 +48,14 @@
 <h2>2.1. Backend mode<a class="headerlink" href="#backend-mode" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DATABASES</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s1">&#39;jira&#39;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s1">&#39;ENGINE&#39;</span><span class="p">:</span> <span class="s1">&#39;django_atlassian.backends.jira&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;ENGINE&#39;</span><span class="p">:</span> <span class="s1">&#39;atlassian_connect_django.backends.jira&#39;</span><span class="p">,</span>
         <span class="s1">&#39;NAME&#39;</span><span class="p">:</span> <span class="s1">&#39;https://your-site.atlassian.net&#39;</span><span class="p">,</span>
         <span class="s1">&#39;USER&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="c1"># Your user</span>
         <span class="s1">&#39;PASSWORD&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="c1"># Your password</span>
         <span class="s1">&#39;SECURITY&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
     <span class="p">},</span>
 
-<span class="n">DATABASE_ROUTERS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;django_atlassian.router.Router&#39;</span><span class="p">]</span>
+<span class="n">DATABASE_ROUTERS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;atlassian_connect_django.router.Router&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -64,7 +64,7 @@
 <p>In this mode, you setup a database configuration to connect to a specific Jira/Confluence
 cloud instance. All custom fields will be automatically introspected.</p>
 <p>Setup the router to make the connected host model be accessed through their own database:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DATABASE_ROUTERS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;django_atlassian.router.Router&#39;</span><span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DATABASE_ROUTERS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;atlassian_connect_django.router.Router&#39;</span><span class="p">]</span>
 
 <span class="n">ALLOWED_HOSTS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;&lt;ID&gt;.ngrok.io&#39;</span><span class="p">]</span>
 </pre></div>
@@ -83,7 +83,7 @@ cloud instance. All custom fields will be automatically introspected.</p>
         <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;jwt&quot;</span>
     <span class="p">},</span>
     <span class="nt">&quot;lifecycle&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;installed&quot;</span><span class="p">:</span> <span class="s2">&quot;{% url &#39;django-atlassian-installed&#39; %}&quot;</span>
+        <span class="nt">&quot;installed&quot;</span><span class="p">:</span> <span class="s2">&quot;{% url &#39;atlassian-connect-django-installed&#39; %}&quot;</span>
     <span class="p">},</span>
     <span class="nt">&quot;scopes&quot;</span><span class="p">:</span> <span class="p">[</span>
         <span class="s2">&quot;read&quot;</span><span class="p">,</span> <span class="s2">&quot;write&quot;</span>
@@ -153,7 +153,7 @@ cloud instance. All custom fields will be automatically introspected.</p>
         <li class="right" >
           <a href="installation.html" title="1. Installation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">django-atlassian 0.1.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">atlassian-connect-django 0.1.1 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

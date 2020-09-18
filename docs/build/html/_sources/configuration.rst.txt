@@ -7,14 +7,14 @@ Backend mode
 
     DATABASES = {
         'jira': {
-            'ENGINE': 'django_atlassian.backends.jira',
+            'ENGINE': 'atlassian_connect_django.backends.jira',
             'NAME': 'https://your-site.atlassian.net',
             'USER': '', # Your user
             'PASSWORD': '', # Your password
             'SECURITY': '',
         },
 
-    DATABASE_ROUTERS = ['django_atlassian.router.Router']
+    DATABASE_ROUTERS = ['atlassian_connect_django.router.Router']
 
 Application mode
 ~~~~~~~~~~~~~~~~
@@ -26,7 +26,7 @@ Setup the router to make the connected host model be accessed through their own 
 
 .. code-block:: python
 
-    DATABASE_ROUTERS = ['django_atlassian.router.Router']
+    DATABASE_ROUTERS = ['atlassian_connect_django.router.Router']
 
     ALLOWED_HOSTS = ['<ID>.ngrok.io']
 
@@ -48,7 +48,7 @@ Create a basic ``atlassian-connect.json`` template file:
             "type": "jwt"
         },
         "lifecycle": {
-            "installed": "{% url 'django-atlassian-installed' %}"
+            "installed": "{% url 'atlassian-connect-django-installed' %}"
         },
         "scopes": [
             "read", "write"

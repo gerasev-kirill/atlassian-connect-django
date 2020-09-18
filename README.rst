@@ -4,7 +4,7 @@ Welcome to Django-Atlassian
 
 .. image:: https://img.shields.io/pypi/djversions/djangorestframework.svg
 
-.. image:: https://img.shields.io/github/license/fluendo/django-atlassian.svg
+.. image:: https://img.shields.io/github/license/fluendo/atlassian-connect-django.svg
 
 
 Django-atlassian allows you to build a Atlassian Connect apps using Django, it includes:
@@ -15,11 +15,11 @@ Django-atlassian allows you to build a Atlassian Connect apps using Django, it i
 Installation
 ------------
 
-Download and install using ``pip install django-atlassian``
+Download and install using ``pip install atlassian-connect-django``
 
 .. code-block:: bash
 
-    $ pip install django-atlassian
+    $ pip install atlassian-connect-django
 
 Example Configuration
 ---------------------
@@ -30,14 +30,14 @@ Backend mode
 
     DATABASES = {
         'jira': {
-            'ENGINE': 'django_atlassian.backends.jira',
+            'ENGINE': 'atlassian_connect_django.backends.jira',
             'NAME': 'https://your-site.atlassian.net',
             'USER': '', # Your user
             'PASSWORD': '', # Your password
             'SECURITY': '',
         },
 
-    DATABASE_ROUTERS = ['django_atlassian.router.Router']
+    DATABASE_ROUTERS = ['atlassian_connect_django.router.Router']
 
 Application mode
 ~~~~~~~~~~~~~~~~
@@ -49,7 +49,7 @@ Setup the router to make the connected host model be accessed through their own 
 
 .. code-block:: python
 
-    DATABASE_ROUTERS = ['django_atlassian.router.Router']
+    DATABASE_ROUTERS = ['atlassian_connect_django.router.Router']
 
     ALLOWED_HOSTS = ['<ID>.ngrok.io']
 
@@ -71,7 +71,7 @@ Create a basic ``atlassian-connect.json`` template file:
             "type": "jwt"
         },
         "lifecycle": {
-            "installed": "{% url 'django-atlassian-installed' %}"
+            "installed": "{% url 'atlassian-connect-django-installed' %}"
         },
         "scopes": [
             "read", "write"
