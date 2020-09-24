@@ -8,6 +8,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.clickjacking import xframe_options_exempt
 from django.conf import settings
 from django.apps import apps
 from django.views.generic.base import TemplateView
@@ -17,6 +18,7 @@ from django.core.exceptions import ImproperlyConfigured
 from .models.connect import SecurityContext, WebhookPayload
 from .addon import JiraAddon, ConfluenceAddon, BaseAddon
 from .decorators import jwt_required
+from .middleware import JWTAuthenticationMiddleware
 
 from . import signals
 
@@ -29,12 +31,14 @@ class LifecycleView(View):
             if not six.PY2:
                 body_unicode = body_unicode.decode('utf-8')
             post = json.loads(body_unicode)
+            print(post)
             return {
                 'key': post['key'],
                 'sharedSecret': post.get('sharedSecret', None),
                 'clientKey': post['clientKey'],
                 'host': post['baseUrl'],
-                'product': post['productType']
+                'product': post['productType'],
+                'oauthClientId': post.get('oauthClientId', None)
             }
         except MultiValueDictKeyError:
             return None
@@ -70,6 +74,9 @@ class LifecycleInstalledView(LifecycleView):
             if sc.client_key != payload['clientKey']:
                 sc.client_key = payload['clientKey']
                 update.append('client_key')
+            if sc.oauth_client_id != payload['oauthClientId']:
+                sc.oauth_client_id = payload['oauthClientId']
+                update.append('oauth_client_id')
             if not sc.is_plugin_enabled:
                 sc.is_plugin_enabled = True
                 update.append('is_plugin_enabled')
@@ -86,6 +93,7 @@ class LifecycleInstalledView(LifecycleView):
                 host=payload['host'],
                 shared_secret=payload['sharedSecret'],
                 client_key=payload['clientKey'],
+                oauth_client_id=payload['oauthClientId'],
                 is_plugin_enabled=True
             )
             try:
@@ -114,6 +122,18 @@ class LifecycleEnabledView(LifecycleView):
             sc.is_plugin_enabled = True
             sc.save(update_fields=['is_plugin_enabled'])
             signals.host_settings_enabled.send(sender=addon_class, payload=payload, security_context=sc)
+        r = sc.get_requests(as_atlassian_user_account_id="557058:652afb00-9d29-4e0b-895c-5c0cd8c16994")
+        response = r.get('/rest/api/2/myself')
+        print(response.json())
+        response = r.get("/rest/api/3/project/search?maxResults=ALL")
+        print(response.json(), len(response.json()['values']))
+        print('------------------------')
+        r = sc.get_requests(as_atlassian_user_account_id="5f6c15b5f0d40100704a7f87")
+        response = r.get('/rest/api/2/myself')
+        print(response.json())
+        response = r.get("/rest/api/3/project/search?maxResults=ALL")
+        print(response.json(), len(response.json()['values']))
+
         return HttpResponse(status=204)
 
 
@@ -177,10 +197,41 @@ class WebhookView(View):
         signals.webhook_auth_verification_successful.send(
             sender=BaseAddon,
             payload_obj=WebhookPayload(**payload),
+            security_context=self.request.atlassian_security_context,
             webhook_name=kwargs['webhook_name']
         )
         return HttpResponse(status=204)
 
+
+
+
+@method_decorator(xframe_options_exempt, name='dispatch')
+class AtlassianBaseTemplateView(TemplateView):
+    template_name = None
+    unauthorized_template_name = None
+
+    def is_unauthorized_requests_allowed(self, request=None):
+        server_url = self.request.build_absolute_uri('/')[:-1]
+        return 'ngrok.io' in server_url or 'localhost' in server_url
+
+    def get_template_names(self):
+        """
+        Returns a list of template names to be used for the request. Must return
+        a list. May not be called if render_to_response is overridden.
+        """
+        if self.is_unauthorized_requests_allowed(self.request):
+            return super(AtlassianBaseTemplateView, self).get_template_names()
+
+        middleware = JWTAuthenticationMiddleware()
+        user, sc, db = middleware.get_atlassian_data_from_request(self.request)
+        if not user.is_authenticated():
+            if self.unauthorized_template_name is None:
+                raise ImproperlyConfigured(
+                    "AtlassianBaseTemplateView requires either a definition of "
+                    "'unauthorized_template_name' or an implementation of 'get_template_names()'")
+            else:
+                return [self.unauthorized_template_name]
+        return super(AtlassianBaseTemplateView, self).get_template_names()
 
 
 
