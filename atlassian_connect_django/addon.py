@@ -35,7 +35,7 @@ def create_ngrok_tunnel(port=None):
         lbu = lbu._replace(scheme='https')
         lbu = lbu._replace(netloc=ltu.netloc)
         ngrok_url_by_ports[port] = lbu.geturl()
-        #os.environ.setdefault('AC_LOCAL_BASE_URL', public_url)
+        os.environ.setdefault('AC_LOCAL_BASE_URL', ngrok_url_by_ports[port])
     return ngrok_url_by_ports[port]
 
 
@@ -121,7 +121,7 @@ class BaseAddon(object):
             self.local_base_url,
             reverse('atlassian-connect-django-jira-connect-json')
         )
-        signals.localtunnel_started.send(sender=self.__class__)
+        signals.localtunnel_started.send(sender=self.__class__, local_base_url=self.local_base_url)
 
         def wait_for_registration_result(host, auth_data, json_data, timeout=0):
             if timeout > 30:

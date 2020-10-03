@@ -164,7 +164,6 @@ class AtlassianRequest(object):
         if get_query_value(query, 'maxResults') != 'ALL':
             kwargs['headers']['Authorization'] = self._create_auth_header(method, url)
             response = requests_method(url, *args, **kwargs)
-            print(response.__dict__)
             return response
 
         # загружаем все результаты из paginated ответа джиры

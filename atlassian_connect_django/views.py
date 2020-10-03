@@ -31,7 +31,6 @@ class LifecycleView(View):
             if not six.PY2:
                 body_unicode = body_unicode.decode('utf-8')
             post = json.loads(body_unicode)
-            print(post)
             return {
                 'key': post['key'],
                 'sharedSecret': post.get('sharedSecret', None),
@@ -86,6 +85,7 @@ class LifecycleInstalledView(LifecycleView):
                     signals.host_settings_saved.send(sender=addon_class, payload=payload, security_context=sc)
                 except Exception as e:
                     signals.host_settings_not_saved.send(sender=addon_class, payload=payload, security_context=sc, exception=e)
+                    raise e
         else:
             # Create a new entry on our database of connections
             sc = SecurityContext(
@@ -122,18 +122,6 @@ class LifecycleEnabledView(LifecycleView):
             sc.is_plugin_enabled = True
             sc.save(update_fields=['is_plugin_enabled'])
             signals.host_settings_enabled.send(sender=addon_class, payload=payload, security_context=sc)
-        r = sc.get_requests(as_atlassian_user_account_id="557058:652afb00-9d29-4e0b-895c-5c0cd8c16994")
-        response = r.get('/rest/api/2/myself')
-        print(response.json())
-        response = r.get("/rest/api/3/project/search?maxResults=ALL")
-        print(response.json(), len(response.json()['values']))
-        print('------------------------')
-        r = sc.get_requests(as_atlassian_user_account_id="5f6c15b5f0d40100704a7f87")
-        response = r.get('/rest/api/2/myself')
-        print(response.json())
-        response = r.get("/rest/api/3/project/search?maxResults=ALL")
-        print(response.json(), len(response.json()['values']))
-
         return HttpResponse(status=204)
 
 
@@ -169,7 +157,7 @@ class LifecycleUninstalledView(LifecycleView):
         if not sc:
             return HttpResponseBadRequest()
         signals.host_settings_pre_delete.send(sender=addon_class, payload=payload, security_context=sc)
-        sc.delete()
+        #sc.delete()
         return HttpResponse(status=204)
 
 
@@ -191,6 +179,8 @@ class WebhookView(View):
 
 
     def post(self, request, *args, **kwargs):
+        if not request.atlassian_security_context or not request.atlassian_security_context.is_plugin_enabled:
+            return HttpResponse(status=204)
         payload = self.get_payload_from_request(request)
         if not payload:
             return HttpResponseBadRequest()

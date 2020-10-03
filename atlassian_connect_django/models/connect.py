@@ -110,9 +110,14 @@ class WebhookPayload(object):
     def __init__(self, **kwargs):
         for k in kwargs:
             if k == 'timestamp':
-                dt = datetime.datetime.fromtimestamp(kwargs[k] / 1e3)
-                dt.replace(tzinfo=datetime.timezone.utc)
-                setattr(self, k, dt)
+                if isinstance(kwargs[k], (int, float)):
+                    dt = datetime.datetime.fromtimestamp(kwargs[k] / 1e3)
+                    dt.replace(tzinfo=datetime.timezone.utc)
+                    setattr(self, k, dt)
+                elif isinstance(kwargs[k], str):
+                    dt = datetime.datetime.strptime(kwargs[k], "%Y-%m-%dT%H:%M:%S.%f")
+                    dt.replace(tzinfo=datetime.timezone.utc)
+                    setattr(self, k, dt)
             else:
                 setattr(self, k, kwargs[k])
 
