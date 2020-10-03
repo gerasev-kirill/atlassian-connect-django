@@ -1,2 +1,3 @@
 include LICENSE
 include README.rst
+recursive-include atlassian_connect_django/* *.py *.json 
