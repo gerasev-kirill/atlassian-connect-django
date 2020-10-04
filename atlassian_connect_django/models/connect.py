@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import datetime, json
-from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from urllib.parse import urlparse
 from atlassian_connect_django.requests import AtlassianRequest
 
 
@@ -91,58 +88,3 @@ class AtlassianUser(object):
 
     def __str__(self):
         return self.__unicode__()
-
-
-
-
-
-def detect_host(payload):
-    for k,v in payload.items():
-        if k == 'self' and isinstance(v, str) and v.startswith('https://'):
-            parsed_uri = urlparse(v)
-            return '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
-        if isinstance(v, dict):
-            return detect_host(v)
-    return None
-
-
-class WebhookPayload(object):
-    def __init__(self, **kwargs):
-        for k in kwargs:
-            if k == 'timestamp':
-                if isinstance(kwargs[k], (int, float)):
-                    dt = datetime.datetime.fromtimestamp(kwargs[k] / 1e3)
-                    dt.replace(tzinfo=datetime.timezone.utc)
-                    setattr(self, k, dt)
-                elif isinstance(kwargs[k], str):
-                    dt = datetime.datetime.strptime(kwargs[k], "%Y-%m-%dT%H:%M:%S.%f")
-                    dt.replace(tzinfo=datetime.timezone.utc)
-                    setattr(self, k, dt)
-            else:
-                setattr(self, k, kwargs[k])
-
-    def __unicode__(self):
-        data = {}
-        for k in dir(self):
-            v = getattr(self, k)
-            if not k.startswith('__') and not callable(v):
-                data[k] = v
-        return json.dumps(data, sort_keys=True, cls=DjangoJSONEncoder, ensure_ascii=False)
-
-    def __str__(self):
-        return self.__unicode__()
-
-    def get_host(self):
-        for k in dir(self):
-            v = getattr(self, k)
-            if not k.startswith('__') and isinstance(v, dict):
-                host = detect_host(v)
-                if host:
-                    return host
-        return None
-
-    def __iter__(self):
-        for k in dir(self):
-            v = getattr(self, k)
-            if not k.startswith('__') and not callable(v):
-                yield k,v

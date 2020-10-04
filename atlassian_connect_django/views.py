@@ -3,6 +3,7 @@
 
 from importlib import import_module
 import json, six
+import datetime
 
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.datastructures import MultiValueDictKeyError
@@ -15,7 +16,7 @@ from django.views.generic.base import TemplateView
 from django.views import View
 from django.core.exceptions import ImproperlyConfigured
 
-from .models.connect import SecurityContext, WebhookPayload
+from .models.connect import SecurityContext
 from .addon import JiraAddon, ConfluenceAddon, BaseAddon
 from .decorators import jwt_required
 from .middleware import JWTAuthenticationMiddleware
@@ -177,6 +178,17 @@ class WebhookView(View):
         except:
             return None
 
+    def fix_payload(self, payload):
+        if isinstance(payload.get('timestamp', None), (int, float)):
+            dt = datetime.datetime.fromtimestamp(payload['timestamp'] / 1e3)
+            dt.replace(tzinfo=datetime.timezone.utc)
+            payload['timestamp'] = dt
+        elif isinstance(payload.get('timestamp', None), str):
+            dt = datetime.datetime.strptime(payload['timestamp'], "%Y-%m-%dT%H:%M:%S.%f")
+            dt.replace(tzinfo=datetime.timezone.utc)
+            payload['timestamp'] = dt
+        return payload
+
 
     def post(self, request, *args, **kwargs):
         if not request.atlassian_security_context or not request.atlassian_security_context.is_plugin_enabled:
@@ -186,7 +198,7 @@ class WebhookView(View):
             return HttpResponseBadRequest()
         signals.webhook_auth_verification_successful.send(
             sender=BaseAddon,
-            payload_obj=WebhookPayload(**payload),
+            payload=self.fix_payload(payload),
             security_context=self.request.atlassian_security_context,
             webhook_name=kwargs['webhook_name']
         )
@@ -266,7 +278,9 @@ class ApplicationDescriptor(TemplateView):
             if not hasattr(module, 'get_connect_data') or not callable(module.get_connect_data):
                 continue
             connect_data = module.get_connect_data(request=self.request, addon=addon)
-            context.update(connect_data)
+            for k in connect_data.keys():
+                if connect_data[k] is not None:
+                    context[k] = connect_data[k]
 
         context = addon.normalize_addon_connect_config(context)
         context['pluginModules'] = json.dumps(context.get('pluginModules', None) or {})
