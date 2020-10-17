@@ -2,6 +2,7 @@
 
 from django.db import models
 from atlassian_connect_django.requests import AtlassianRequest
+from atlassian_connect_django import helpers
 
 
 try:
@@ -20,12 +21,11 @@ except ImportError:
 
 
 
-class SecurityContext(models.base.Model):
+class SecurityContextAbstract(models.base.Model):
     """
     Stores the security context shared on the installation
     handshake process
     """
-
     shared_secret = models.CharField(max_length=512, null=False, blank=False)
     key = models.CharField(max_length=512, null=False, blank=False)
     client_key = models.CharField(max_length=512, null=False, blank=False)
@@ -39,6 +39,19 @@ class SecurityContext(models.base.Model):
     def __unicode__(self):
         return "%s: %s" % (self.key, self.host)
 
+    class Meta:
+        abstract = True
+
+
+if helpers.SiteModel:
+    class SecurityContext(SecurityContextAbstract):
+        site = models.ForeignKey(helpers.SiteModel, on_delete=models.CASCADE)
+        class Meta:
+            abstract = False
+else:
+    class SecurityContext(SecurityContextAbstract):
+        class Meta:
+            abstract = False
 
 
 

@@ -21,7 +21,7 @@ from .addon import JiraAddon, ConfluenceAddon, BaseAddon
 from .decorators import jwt_required
 from .middleware import JWTAuthenticationMiddleware
 
-from . import signals
+from . import signals, helpers
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -64,7 +64,11 @@ class LifecycleInstalledView(LifecycleView):
             return HttpResponseBadRequest()
         # Store the security context
         # https://developer.atlassian.com/cloud/jira/platform/authentication-for-apps/
-        sc = SecurityContext.objects.filter(key=payload['key'], host=payload['host']).first()
+        site = helpers.get_current_site(request=request)
+        fwargs = {'key': payload['key'], 'host': payload['host']}
+        if site:
+            fwargs['site'] = site
+        sc = SecurityContext.objects.filter(**fwargs).first()
         if sc:
             update = []
             # Confirm that the shared key is the same, otherwise update it
@@ -97,6 +101,8 @@ class LifecycleInstalledView(LifecycleView):
                 oauth_client_id=payload['oauthClientId'],
                 is_plugin_enabled=True
             )
+            if site:
+                sc.site = site
             try:
                 sc.save()
                 signals.host_settings_saved.send(sender=addon_class, payload=payload, security_context=sc)
@@ -116,7 +122,12 @@ class LifecycleEnabledView(LifecycleView):
         if not payload:
             return HttpResponseBadRequest()
 
-        sc = SecurityContext.objects.filter(key=payload['key'], host=payload['host']).first()
+        site = helpers.get_current_site(request=request)
+        site = helpers.get_current_site(request=request)
+        fwargs = {'key': payload['key'], 'host': payload['host']}
+        if site:
+            fwargs['site'] = site
+        sc = SecurityContext.objects.filter(**fwargs).first()
         if not sc:
             return HttpResponseBadRequest()
         if not sc.is_plugin_enabled:
@@ -135,7 +146,11 @@ class LifecycleDisabledView(LifecycleView):
         if not payload:
             return HttpResponseBadRequest()
 
-        sc = SecurityContext.objects.filter(key=payload['key'], host=payload['host']).first()
+        site = helpers.get_current_site(request=request)
+        fwargs = {'key': payload['key'], 'host': payload['host']}
+        if site:
+            fwargs['site'] = site
+        sc = SecurityContext.objects.filter(**fwargs).first()
         if not sc:
             return HttpResponseBadRequest()
         if sc.is_plugin_enabled:
@@ -154,7 +169,11 @@ class LifecycleUninstalledView(LifecycleView):
         if not payload:
             return HttpResponseBadRequest()
 
-        sc = SecurityContext.objects.filter(key=payload['key'], host=payload['host']).first()
+        site = helpers.get_current_site(request=request)
+        fwargs = {'key': payload['key'], 'host': payload['host']}
+        if site:
+            fwargs['site'] = site
+        sc = SecurityContext.objects.filter(**fwargs).first()
         if not sc:
             return HttpResponseBadRequest()
         signals.host_settings_pre_delete.send(sender=addon_class, payload=payload, security_context=sc)

@@ -4,6 +4,7 @@ from django.core.exceptions import PermissionDenied
 from django.utils.translation import ugettext_lazy as _
 
 from atlassian_connect_django.models.connect import AtlassianUser
+from atlassian_connect_django import helpers
 from .models import SecurityContextToken
 
 
@@ -45,6 +46,9 @@ def get_atlassian_security_context_and_user_from_request(request, raise_exceptio
     if not token.security_context.is_plugin_enabled:
         return exception(_('Security context inactive or deleted.'))
 
+    site = helpers.get_current_site(request=request)
+    if site and site != token.security_context.site:
+        return exception(_('Invalid x-jira-security-context token header. SecurityContext site "%s" not equals to "%s"' % (token.security_context.site.name, site.name)))
     atlassian_user = AtlassianUser(accountId=token.atlassian_user_account_id)
     atlassian_user.set_secutiry_context(security_context=token.security_context)
     return token.security_context, atlassian_user
