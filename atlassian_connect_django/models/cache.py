@@ -4,7 +4,7 @@ from django.db import models
 
 
 try:
-    from django.db.models.fields import JSONField as BaseJSONField
+    from django.db.models import JSONField as BaseJSONField
     class JSONField(BaseJSONField):
         def __init__(self, *args, **kwargs):
             kwargs['default'] = dict
