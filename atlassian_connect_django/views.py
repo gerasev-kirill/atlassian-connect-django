@@ -245,7 +245,7 @@ class AtlassianBaseTemplateView(TemplateView):
 
         middleware = JWTAuthenticationMiddleware()
         user, sc, db = middleware.get_atlassian_data_from_request(self.request)
-        if not user.is_authenticated():
+        if not user.is_authenticated:
             if self.unauthorized_template_name is None:
                 raise ImproperlyConfigured(
                     "AtlassianBaseTemplateView requires either a definition of "

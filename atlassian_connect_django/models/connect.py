@@ -70,6 +70,7 @@ class AtlassianUser(object):
             else:
                 setattr(self, k, kwargs[k])
 
+    @property
     def is_authenticated(self):
         return bool(self.accountId)
 
@@ -77,7 +78,7 @@ class AtlassianUser(object):
         self._security_context = security_context
 
     def refresh_from_db(self, using=None, fields=None):
-        if not self._security_context or not self.is_authenticated():
+        if not self._security_context or not self.is_authenticated:
             return
         data = self._security_context.get_requests(as_atlassian_user_account_id=self.accountId).get(
             "/rest/api/3/myself"
@@ -90,12 +91,12 @@ class AtlassianUser(object):
     def get_requests(self):
         if not self._security_context:
             raise Exception("Provide security context with set_secutiry_context function")
-        if not self.is_authenticated():
+        if not self.is_authenticated:
             raise Exception("User is not authenticated!")
         return self._security_context.get_requests(as_atlassian_user_account_id=self.accountId)
 
     def __unicode__(self):
-        if self.is_authenticated():
+        if self.is_authenticated:
             return "<Atlassian user: %s>" % self.accountId
         return "<Anonymous atlassian user>"
 
