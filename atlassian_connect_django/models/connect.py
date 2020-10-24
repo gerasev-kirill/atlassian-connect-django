@@ -32,6 +32,8 @@ class SecurityContextAbstract(models.base.Model):
     host = models.CharField(max_length=512, null=False, blank=False)
     oauth_client_id = models.CharField(max_length=512, null=False, blank=False)
     is_plugin_enabled = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def get_requests(self, as_atlassian_user_account_id=None):
         return AtlassianRequest(security_context=self, as_atlassian_user_account_id=as_atlassian_user_account_id)

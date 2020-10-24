@@ -176,6 +176,8 @@ class LifecycleUninstalledView(LifecycleView):
         sc = SecurityContext.objects.filter(**fwargs).first()
         if not sc:
             return HttpResponseBadRequest()
+        sc.is_plugin_enabled = False
+        sc.save(update_fields=['is_plugin_enabled'])
         signals.host_settings_pre_delete.send(sender=addon_class, payload=payload, security_context=sc)
         #sc.delete()
         return HttpResponse(status=204)
