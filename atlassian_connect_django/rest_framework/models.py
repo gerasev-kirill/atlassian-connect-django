@@ -14,8 +14,9 @@ class SecurityContextToken(models.Model):
     The default authorization token model.
     """
     key = models.CharField(_("Key"), max_length=40, primary_key=True)
-    security_context = models.OneToOneField(
-        SecurityContext, related_name='security_context_token',
+    security_context = models.ForeignKey(
+        SecurityContext,
+        related_name='security_context_token',
         on_delete=models.CASCADE
     )
     atlassian_user_account_id = models.CharField(_("Atlassian user id"), max_length=50)
