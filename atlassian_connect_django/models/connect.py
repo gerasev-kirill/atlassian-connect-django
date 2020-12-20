@@ -79,12 +79,13 @@ class AtlassianUser(object):
     def set_secutiry_context(self, security_context=None):
         self._security_context = security_context
 
-    def refresh_from_db(self, using=None, fields=None):
+    def refresh_from_db(self, using=None, fields=None, expand=None):
         if not self._security_context or not self.is_authenticated:
             return
-        data = self._security_context.get_requests(as_atlassian_user_account_id=self.accountId).get(
-            "/rest/api/3/myself"
-        )
+        url = "/rest/api/3/myself"
+        if expand:
+            url = url + "?expand=" + ','.join(expand)
+        data = self._security_context.get_requests(as_atlassian_user_account_id=self.accountId).get(url)
         for k,v in data.items():
             if k == 'timeZone':
                 v = string_to_timezone(v)
