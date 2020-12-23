@@ -15,6 +15,7 @@ from django.apps import apps
 from django.views.generic.base import TemplateView
 from django.views import View
 from django.core.exceptions import ImproperlyConfigured
+from django.utils import timezone
 
 from .models.connect import SecurityContext
 from .addon import JiraAddon, ConfluenceAddon, BaseAddon
@@ -155,7 +156,8 @@ class LifecycleDisabledView(LifecycleView):
             return HttpResponseBadRequest()
         if sc.is_plugin_enabled:
             sc.is_plugin_enabled = False
-            sc.save(update_fields=['is_plugin_enabled'])
+            sc.updated_at = timezone.now()
+            sc.save(update_fields=['is_plugin_enabled', 'updated_at'])
             signals.host_settings_disabled.send(sender=addon_class, payload=payload, security_context=sc)
         return HttpResponse(status=204)
 
@@ -177,7 +179,8 @@ class LifecycleUninstalledView(LifecycleView):
         if not sc:
             return HttpResponseBadRequest()
         sc.is_plugin_enabled = False
-        sc.save(update_fields=['is_plugin_enabled'])
+        sc.updated_at = timezone.now()
+        sc.save(update_fields=['is_plugin_enabled', 'updated_at'])
         signals.host_settings_pre_delete.send(sender=addon_class, payload=payload, security_context=sc)
         #sc.delete()
         return HttpResponse(status=204)
