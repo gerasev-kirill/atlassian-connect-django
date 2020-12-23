@@ -19,7 +19,7 @@ setup(
     author_email='gerasev.kirill@gmail.com',
     install_requires=[
         "Django >= 1.11",
-        "PyJWT >= 1.6.4",
+        "PyJWT >= 1.6.4, <= 1.7.1",
         "atlassian-jwt >= 1.8.1",
         "requests >= 2.18.4",
         "requests-jwt==0.5.3",
