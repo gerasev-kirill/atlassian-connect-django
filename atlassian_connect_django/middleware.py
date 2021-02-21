@@ -136,3 +136,19 @@ class JWTAuthenticationMiddleware(MiddlewareMixin):
         new_db['PORT'] = ''
         new_db['SECURITY'] = sc
         return new_db
+
+
+
+
+
+class FakeAuthenticationMiddleware(JWTAuthenticationMiddleware):
+    def get_atlassian_data_from_request(self, request):
+        if hasattr(request, 'atlassian_security_context') \
+                and hasattr(request, 'atlassian_db') and hasattr(request, 'atlassian_user'):
+            return request.atlassian_user, request.atlassian_security_context, request.atlassian_db
+        if not request.META.get('HTTP_X_JIRA_SECURITY_CONTEXT', None) or not request.META.get('HTTP_X_JIRA_USER_ACCOUNT_ID', None):
+            return None, None, None
+
+        sc = SecurityContext.objects.filter(id=request.META['HTTP_X_JIRA_SECURITY_CONTEXT']).first()
+        user = AtlassianUser(accountId=request.META['HTTP_X_JIRA_USER_ACCOUNT_ID'])
+        return user, sc, None
