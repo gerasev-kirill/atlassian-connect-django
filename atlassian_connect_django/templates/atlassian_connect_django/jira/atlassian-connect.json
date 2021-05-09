@@ -23,5 +23,8 @@
     "scopes": {% if pluginScopes %}{{ pluginScopes|safe }}{% else %}["READ"]{% endif %},
     "apiVersion": 1,
     "version": {% if pluginVersion %}"{{pluginVersion}}"{% else %}"1.0.0"{% endif%},
+    "apiMigrations": {
+        "context-qsh": true
+    },
     "modules": {{ pluginModules|safe }}
 }
