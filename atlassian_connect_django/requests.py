@@ -137,10 +137,11 @@ class AtlassianOAuth2:
 
 class AtlassianRequest(object):
     _oauth2 = None
-    def __init__(self, security_context=None, as_atlassian_user_account_id=None):
+    def __init__(self, security_context=None, as_atlassian_user_account_id=None, as_atlassian_user_scopes=None):
         self._security_context = security_context
         self._request = requests.Session()
         self._as_atlassian_user_account_id = as_atlassian_user_account_id
+        self._as_atlassian_user_scopes = as_atlassian_user_scopes
 
 
     def _create_auth_header(self, method, url):
@@ -151,7 +152,7 @@ class AtlassianRequest(object):
             raise ImproperlyConfigured("This security context doesn't have 'ACT_AS_USER' permission in scope! You can't run create_auth_header method as user!")
         if not self._oauth2:
             self._oauth2 = AtlassianOAuth2(self._security_context)
-        return "Bearer %s" % self._oauth2.get_access_token(self._as_atlassian_user_account_id)
+        return "Bearer %s" % self._oauth2.get_access_token(self._as_atlassian_user_account_id, scopes=self._as_atlassian_user_scopes)
 
 
     def _base(self, method, url, *args, **kwargs):

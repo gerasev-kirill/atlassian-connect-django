@@ -31,7 +31,8 @@ class AtlassianUserOAuth2BearerToken(models.base.Model):
         if self.token_cache[id]['expires'] > now + 10:
             print('GOT TOKEN from cache!', self.token_cache[id]['expires'], now+10)
             return self.token_cache[id]['token']
-        del self.token_cache[id]['token']
+        if 'token' in self.token_cache[id]:
+            del self.token_cache[id]['token']
         self.save(update_fields=['token_cache'])
         return None
 
