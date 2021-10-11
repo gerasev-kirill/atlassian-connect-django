@@ -112,14 +112,14 @@ class BaseAddon(object):
 
         hosts = self.get_hosts_for_plugin()
         if not hosts:
-            logger.warn("Add-on not registered; no compatible hosts detected. Provide them in credentials.json")
+            logger.warn("%s: ❌ %s" % (self.product.upper(), "Add-on not registered; no compatible hosts detected. Provide them in credentials.json"))
             return
 
         self.local_base_url = create_ngrok_tunnel(port=port)
         self.is_registered = False
         descriptor_url = urljoin(
             self.local_base_url,
-            reverse('atlassian-connect-django-jira-connect-json')
+            reverse('atlassian-connect-django-%s-connect-json' % self.product)
         )
         signals.localtunnel_started.send(sender=self.__class__, local_base_url=self.local_base_url)
 
@@ -151,7 +151,7 @@ class BaseAddon(object):
         for host,auth_data in hosts.items():
             session = requests.Session()
             r = session.get(
-                urljoin(host, "/rest/plugins/1.0/"),
+                urljoin(host, "rest/plugins/1.0/"),
                 auth=(auth_data['username'], auth_data['password'])
             )
             if r.status_code < 200 or r.status_code > 299:
@@ -159,7 +159,7 @@ class BaseAddon(object):
                 continue
 
             r_addon = session.post(
-                urljoin(host, "/rest/plugins/1.0/"),
+                urljoin(host, "rest/plugins/1.0/"),
                 params={'token': r.headers['upm-token']},
                 headers={
                     'content-type': 'application/vnd.atl.plugins.remote.install+json',
@@ -219,11 +219,3 @@ class JiraAddon(BaseAddon):
 
 class ConfluenceAddon(BaseAddon):
     product = 'confluence'
-
-    def register(self, port=None):
-        logger.warn("%s: 🤔 register is not implemented" % self.product.upper())
-
-    def unregister(self, port=None):
-        if not self.is_registered:
-            return
-        logger.warn("%s: 🤔 unregister is not implemented" % self.product.upper())

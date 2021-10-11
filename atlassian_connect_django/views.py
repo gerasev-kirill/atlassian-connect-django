@@ -109,6 +109,7 @@ class LifecycleInstalledView(LifecycleView):
                 signals.host_settings_saved.send(sender=addon_class, payload=payload, security_context=sc)
             except Exception as e:
                 signals.host_settings_not_saved.send(sender=addon_class, payload=payload, security_context=sc, exception=e)
+                return HttpResponse(str(e), status=500)
 
         return HttpResponse(status=204)
 

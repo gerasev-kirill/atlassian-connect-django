@@ -30,7 +30,7 @@ class SecurityContextAbstract(models.base.Model):
     key = models.CharField(max_length=512, null=False, blank=False)
     client_key = models.CharField(max_length=512, null=False, blank=False)
     host = models.CharField(max_length=512, null=False, blank=False)
-    oauth_client_id = models.CharField(max_length=512, null=False, blank=False)
+    oauth_client_id = models.CharField(max_length=512, null=True, blank=False)
     is_plugin_enabled = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
