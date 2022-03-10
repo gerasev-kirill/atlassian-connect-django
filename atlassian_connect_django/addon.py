@@ -22,12 +22,17 @@ def read_json_file(filepath):
     return data or {}
 
 
-def create_ngrok_tunnel(port=None):
+def create_ngrok_tunnel(port=None, authtoken=None):
     from pyngrok import ngrok
 
     if port is None:
         port = 80
+    if authtoken is None:
+        authtoken = os.environ.get('NGROK_AUTH_TOKEN', None)
+
     if port not in ngrok_url_by_ports:
+        if authtoken:
+            ngrok.set_auth_token(authtoken)
         ltu = urlparse(ngrok.connect(port=port))
         lbu = urlparse(
             os.environ.get('AC_LOCAL_BASE_URL', None) or 'http://localhost:8000'

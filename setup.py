@@ -25,7 +25,7 @@ setup(
         "requests-jwt==0.5.3",
         "jira==2.0.0",
         "jsmin >= 2.2.2",
-        "pyngrok == 4.1.12"
+        "pyngrok >= 4.1.12, <= 6.0.0"
     ],
     classifiers=[
             'Environment :: Web Environment',
