@@ -88,6 +88,8 @@ class JWTAuthenticationMiddleware(MiddlewareMixin):
             uri = "%s?%s" % (uri, query)
         try:
             client_key = auth.authenticate(request.method, uri, headers)
+            if hasattr(client_key, "client_key"):
+                client_key = client_key.client_key
         except Exception as e:
             if 'atlassian_connect_django.rest_framework' not in settings.INSTALLED_APPS:
                 return AtlassianUser(), None, None
