@@ -1,7 +1,12 @@
 from six import text_type
 from rest_framework import HTTP_HEADER_ENCODING, exceptions
 from django.core.exceptions import PermissionDenied
-from django.utils.translation import ugettext_lazy as _
+try:
+    # DEPRECATED
+    from django.utils.translation import ugettext_lazy as _
+except ImportError:
+    # django >= 4.0.0
+    from django.utils.translation import gettext_lazy as _
 
 from atlassian_connect_django.models.connect import AtlassianUser
 from atlassian_connect_django import helpers

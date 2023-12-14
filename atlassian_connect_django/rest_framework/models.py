@@ -3,7 +3,12 @@ import os
 
 from django.conf import settings
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+try:
+    from django.utils.translation import ugettext_lazy as _
+except ImportError:
+    # django >= 4.0.0
+    from django.utils.translation import gettext_lazy as _
+
 
 from atlassian_connect_django.models.connect import SecurityContext
 

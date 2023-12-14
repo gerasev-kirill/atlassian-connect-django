@@ -33,7 +33,16 @@ def create_ngrok_tunnel(port=None, authtoken=None):
     if port not in ngrok_url_by_ports:
         if authtoken:
             ngrok.set_auth_token(authtoken)
-        ltu = urlparse(ngrok.connect(port=port))
+        try:
+            # new api
+            ngrok_url = ngrok.connect(addr=port)
+        except:
+            # old api
+            ngrok_url = ngrok.connect(port=port)
+        if getattr(ngrok_url, 'public_url', None):
+            # new api
+            ngrok_url = ngrok_url.public_url
+        ltu = urlparse(ngrok_url)
         lbu = urlparse(
             os.environ.get('AC_LOCAL_BASE_URL', None) or 'http://localhost:8000'
         )
