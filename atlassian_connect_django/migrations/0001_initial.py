@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='SecurityContext',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('shared_secret', models.CharField(max_length=512)),
                 ('key', models.CharField(max_length=512)),
                 ('client_key', models.CharField(max_length=512)),

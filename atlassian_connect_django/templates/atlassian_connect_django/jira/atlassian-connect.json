@@ -4,7 +4,7 @@
     "key": "{{ pluginKey }}",
     "baseUrl": "{{ localBaseUrl }}",
     "links": {
-        "self": "{{ localBaseUrl }}{% url 'atlassian-connect-django-jira-connect-json' %}"
+        "self": "{{ localBaseUrl }}{% url 'atlassian-connect-django-jira-connect-json' plugin_version=pluginVersion %}"
     },
     "vendor": {
         "name": "{{ vendorName }}",

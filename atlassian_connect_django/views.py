@@ -239,7 +239,7 @@ class AtlassianBaseTemplateView(TemplateView):
 
     def is_unauthorized_requests_allowed(self, request=None):
         server_url = self.request.build_absolute_uri('/')[:-1]
-        return 'ngrok.io' in server_url or 'localhost' in server_url
+        return 'ngrok.io' in server_url or 'ngrok-free' in server_url or 'localhost' in server_url
 
     def get_template_names(self):
         """
@@ -302,7 +302,7 @@ class ApplicationDescriptor(TemplateView):
                 continue
             if not hasattr(module, 'get_connect_data') or not callable(module.get_connect_data):
                 continue
-            connect_data = module.get_connect_data(request=self.request, addon=addon)
+            connect_data = module.get_connect_data(request=self.request, addon=addon, **kwargs)
             for k in connect_data.keys():
                 if connect_data[k] is not None:
                     context[k] = connect_data[k]
@@ -311,6 +311,11 @@ class ApplicationDescriptor(TemplateView):
         context['pluginModules'] = json.dumps(context.get('pluginModules', None) or {})
         if 'pluginScopes' in context and not isinstance(context['pluginScopes'], str):
             context['pluginScopes'] = json.dumps(context['pluginScopes'])
+
+        if not context.get('pluginVersion', None):
+            context['pluginVersion'] = '1.0.0'
+        if 'plugin_version' in kwargs:
+            context['pluginVersion'] = kwargs['plugin_version']
         return context
 
 
