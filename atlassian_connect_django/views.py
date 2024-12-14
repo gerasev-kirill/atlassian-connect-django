@@ -285,7 +285,7 @@ class ApplicationDescriptor(TemplateView):
             raise NameError("Unknown application name '%s'" % self.application_name)
 
         context = super(ApplicationDescriptor, self).get_context_data(*args, **kwargs)
-        context['localBaseUrl'] = addon.get_local_base_url(self.request)
+        context['localBaseUrl'] = addon.get_local_base_url(self.request) or ''
         # Get the needed settings or abort
         prop = 'DJANGO_ATLASSIAN_CONNECT_ADDON_{}'.format(self.get_application_name().upper())
         config = {}
