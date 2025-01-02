@@ -239,7 +239,7 @@ class AtlassianBaseTemplateView(TemplateView):
 
     def is_unauthorized_requests_allowed(self, request=None):
         server_url = self.request.build_absolute_uri('/')[:-1]
-        return 'ngrok.io' in server_url or 'ngrok-free' in server_url or 'localhost' in server_url
+        return 'ngrok' in server_url or 'localhost' in server_url
 
     def get_template_names(self):
         """

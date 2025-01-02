@@ -148,11 +148,19 @@ class FakeAuthenticationMiddleware(JWTAuthenticationMiddleware):
         if hasattr(request, 'atlassian_security_context') \
                 and hasattr(request, 'atlassian_db') and hasattr(request, 'atlassian_user'):
             return request.atlassian_user, request.atlassian_security_context, request.atlassian_db
-        if not request.META.get('HTTP_X_JIRA_SECURITY_CONTEXT', None) or not request.META.get('HTTP_X_JIRA_USER_ACCOUNT_ID', None):
+        #if not request.META.get('HTTP_X_JIRA_SECURITY_CONTEXT', None) or not request.META.get('HTTP_X_JIRA_USER_ACCOUNT_ID', None):
+        if not request.META.get('HTTP_X_JIRA_SECURITY_CONTEXT', None):
             return None, None, None
 
-        sc = SecurityContext.objects.filter(id=request.META['HTTP_X_JIRA_SECURITY_CONTEXT']).first()
-        user = AtlassianUser(accountId=request.META['HTTP_X_JIRA_USER_ACCOUNT_ID'])
+        id = request.META['HTTP_X_JIRA_SECURITY_CONTEXT']
+        if not isinstance(id, str):
+            id = str(id)
+        try:
+            id = id.split(' ')[1]
+            sc = SecurityContext.objects.filter(id=id).first()
+        except:
+            return None, None, None
+        user = AtlassianUser(accountId=sc.security_context_token.all().first().atlassian_user_account_id)
         return user, sc, None
 
     def process_request(self, request):

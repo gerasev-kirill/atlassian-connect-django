@@ -131,10 +131,15 @@ class BaseAddon(object):
 
         self.local_base_url = create_ngrok_tunnel(port=port)
         self.is_registered = False
-        descriptor_url = urljoin(
-            self.local_base_url,
-            reverse('atlassian-connect-django-%s-connect-json' % self.product)
-        )
+
+        try:
+            descriptor_url = reverse('atlassian-connect-django-%s-connect-json' % self.product, kwargs={
+                'plugin_version': settings.DJANGO_ATLASSIAN_CONNECT_ADDON_JIRA.get('pluginVersion', 'dev')
+            })
+        except:
+            descriptor_url = reverse('atlassian-connect-django-%s-connect-json' % self.product)
+        descriptor_url = urljoin(self.local_base_url, descriptor_url)
+
         signals.localtunnel_started.send(sender=self.__class__, local_base_url=self.local_base_url)
 
         def wait_for_registration_result(host, auth_data, json_data, timeout=0):
@@ -169,7 +174,7 @@ class BaseAddon(object):
                 auth=(auth_data['username'], auth_data['password'])
             )
             if r.status_code < 200 or r.status_code > 299:
-                logger.error("%s: Invalid username or passworn on %s. Error: %s" % (self.product.upper(), host, get_error(r)))
+                logger.error("%s: Invalid username or password on %s. Error: %s" % (self.product.upper(), host, get_error(r)))
                 continue
 
             r_addon = session.post(
